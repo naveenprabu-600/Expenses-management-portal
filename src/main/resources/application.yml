@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: expense-portal-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/expenses}
+    username: ${DB_USER:expenses}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  main:
+    banner-mode: off
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+expense:
+  env: ${APP_ENV:local}
+  demo:
+    password: ${DEMO_USER_PASSWORD:}
+  jwt:
+    secret: ${EXPENSE_JWT_SECRET:}
+    ttl: PT8H
