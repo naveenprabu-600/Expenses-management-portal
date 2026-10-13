@@ -10,7 +10,7 @@ The web app is in [expense-portal-web](../expense-portal-web).
 
 ## Stack
 
-Java 17, Spring Boot 3.5, PostgreSQL 16 (schema and seed data via Flyway),
+Java 17, Spring Boot 4.1, PostgreSQL 16 (schema and seed data via Flyway),
 Spring Security with signed bearer tokens, JSON logs (logstash-logback-encoder).
 
 ## Run everything with Docker
