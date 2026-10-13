@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    private static final String PHRASE = "correct horse battery";
+    private static final String PHRASE = UUID.randomUUID().toString();
 
     private final PasswordEncoder encoder = new BCryptPasswordEncoder(4);
 
@@ -54,7 +55,7 @@ class AuthServiceTest {
     void refusesTheWrongPassword() {
         when(users.findByUsername("alice")).thenReturn(Optional.of(user("alice")));
 
-        assertThatThrownBy(() -> auth.login(new LoginRequest("alice", "not the phrase")))
+        assertThatThrownBy(() -> auth.login(new LoginRequest("alice", PHRASE + "-wrong")))
                 .isInstanceOf(BadCredentialsException.class);
         verifyNoInteractions(tokens);
     }

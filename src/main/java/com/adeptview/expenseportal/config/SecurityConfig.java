@@ -28,11 +28,12 @@ import org.springframework.security.oauth2.server.resource.web.authentication.Be
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Stateless API security: a signed bearer token on every request except sign-in
- * and the health check, and a role per area.
+ * Stateless API security: a signed bearer token on every request except the
+ * token request and the health check, and a role per area.
  *
- * Requests carrying a bearer token are exempt from CSRF checks by the resource
- * server itself; sign-in is the one unauthenticated write and is exempted here.
+ * CSRF protection is left on. Requests carrying a bearer token are exempt by
+ * the resource server itself, and the token request is a GET, so no endpoint
+ * needs an exemption of its own.
  */
 @Configuration
 @EnableWebSecurity
@@ -67,10 +68,9 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/auth/login"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/token").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
                         .requestMatchers("/api/search/**", "/api/imports/**").hasRole("FINANCE")
                         .requestMatchers("/api/approvals/**").hasRole("MANAGER")
