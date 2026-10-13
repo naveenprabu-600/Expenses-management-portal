@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fetches everything from Google's read-only mirror of Maven Central.
+
+  Maven Central rate-limits busy addresses: after roughly 100 requests it
+  answers 429 and blocks the address for about 30 minutes. A clean build needs
+  several hundred downloads, so builds on a shared server can be blocked. The
+  mirror serves the same artifacts and is not limited per address.
+
+  Used automatically through .mvn/maven.config.
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>gcs-central</id>
+      <name>Google mirror of Maven Central</name>
+      <url>https://maven-central.storage-download.googleapis.com/maven2</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>

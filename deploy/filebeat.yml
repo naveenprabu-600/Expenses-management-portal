@@ -1,0 +1,57 @@
+# Ships the API's JSON log file to Elasticsearch, into the data stream
+# logs-expenseportal-<APP_ENV>, with the fields renamed to the Elastic Common
+# Schema so they line up with Elastic's built-in logs template:
+#
+#   level          -> log.level             logger_name  -> log.logger
+#   stack_trace    -> error.stack_trace     thread_name  -> process.thread.name
+#   request_id     -> http.request.id       user         -> user.name
+#   app            -> service.name          env          -> service.environment
+#
+# Reads a file from a shared volume, so it needs neither the Docker socket nor
+# any access to the host.
+
+filebeat.inputs:
+  - type: filestream
+    id: expense-portal-api
+    paths:
+      - /var/log/expense-portal/api*.json
+    parsers:
+      - ndjson:
+          target: ""
+          overwrite_keys: true
+          add_error_key: true
+
+processors:
+  - rename:
+      ignore_missing: true
+      fail_on_error: false
+      fields:
+        - { from: "level", to: "log.level" }
+        - { from: "logger_name", to: "log.logger" }
+        - { from: "stack_trace", to: "error.stack_trace" }
+        - { from: "thread_name", to: "process.thread.name" }
+        - { from: "request_id", to: "http.request.id" }
+        - { from: "user", to: "user.name" }
+        - { from: "app", to: "service.name" }
+        - { from: "env", to: "service.environment" }
+  - drop_fields:
+      ignore_missing: true
+      fields: ["@version", "level_value"]
+  - add_fields:
+      target: data_stream
+      fields:
+        type: logs
+        dataset: expenseportal
+        namespace: ${APP_ENV:dev}
+
+output.elasticsearch:
+  hosts: ["${ELASTICSEARCH_HOSTS}"]
+  api_key: "${ELASTICSEARCH_API_KEY}"
+  index: "logs-expenseportal-${APP_ENV:dev}"
+
+# The data stream's template and retention are managed in Elasticsearch.
+setup.template.enabled: false
+setup.ilm.enabled: false
+
+logging.level: info
+logging.to_stderr: true

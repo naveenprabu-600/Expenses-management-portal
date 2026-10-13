@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  One JSON object per line on stdout, ready for Filebeat.
+  One JSON object per line, timestamps in UTC.
 
   Every line carries the request ID and, once signed in, the user (both from the
   MDC), plus the app and environment names, so a log search can be narrowed to
   this service and to a single request.
 
+  Always written to stdout. With the "log-file" profile the same lines also go
+  to a rolling file under LOG_DIR, which a log shipper such as Filebeat reads
+  from a shared volume.
+
   Caller data (file and line on every line) costs a stack walk per log call, so
   it is off unless LOG_CALLER_DATA=true.
 -->
 <configuration>
-  <springProperty scope="context" name="APP_ENV" source="expense.env" defaultValue="local"/>
+  <springProperty scope="local" name="APP_ENV" source="expense.env" defaultValue="local"/>
 
   <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <timeZone>UTC</timeZone>
+      <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
       <includeContext>false</includeContext>
       <customFields>{"app":"expense-portal-api","env":"${APP_ENV}"}</customFields>
       <includeCallerData>${LOG_CALLER_DATA:-false}</includeCallerData>
@@ -25,4 +31,27 @@
   <root level="INFO">
     <appender-ref ref="JSON"/>
   </root>
+
+  <springProfile name="log-file">
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>${LOG_DIR:-/var/log/expense-portal}/api.json</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+        <fileNamePattern>${LOG_DIR:-/var/log/expense-portal}/api.%d{yyyy-MM-dd}.%i.json</fileNamePattern>
+        <maxFileSize>20MB</maxFileSize>
+        <maxHistory>3</maxHistory>
+        <totalSizeCap>200MB</totalSizeCap>
+      </rollingPolicy>
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <timeZone>UTC</timeZone>
+        <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+        <includeContext>false</includeContext>
+        <customFields>{"app":"expense-portal-api","env":"${APP_ENV}"}</customFields>
+        <includeCallerData>${LOG_CALLER_DATA:-false}</includeCallerData>
+      </encoder>
+    </appender>
+
+    <root level="INFO">
+      <appender-ref ref="FILE"/>
+    </root>
+  </springProfile>
 </configuration>
